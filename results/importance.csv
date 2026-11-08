@@ -1,0 +1,10 @@
+,mean,std
+koi_prad,0.2466,0.0322
+koi_model_snr,0.1474,0.0085
+koi_period,0.0782,0.0046
+koi_duration,0.0717,0.0088
+koi_srad,0.038,0.0028
+koi_steff,0.024,0.0043
+koi_teq,0.0166,0.0089
+koi_depth,0.013,0.0041
+koi_insol,0.0016,0.002
