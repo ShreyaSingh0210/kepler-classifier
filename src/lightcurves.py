@@ -10,7 +10,7 @@ from src.data import load_koi
 PROCESSED_DIR = Path("data") / "processed"
 FAILED_LOG = Path("data") / "failed_stars.txt"
 
-N_STARS_PER_CLASS = 100   # start small: 100 planets + 100 false positives
+N_STARS_PER_CLASS = 1000  # start small: 100 planets + 100 false positives
 GLOBAL_BINS = 2001
 LOCAL_BINS = 201
 MAX_RETRIES = 3
