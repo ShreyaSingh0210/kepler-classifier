@@ -1,0 +1,2 @@
+name,device,batch,amp,preload,compile,sec_per_epoch,samples_per_sec
+cpu,cpu,64,False,False,False,0.252,828.1

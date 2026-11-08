@@ -1,4 +1,5 @@
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import lightkurve as lk
@@ -10,24 +11,21 @@ from src.data import load_koi
 PROCESSED_DIR = Path("data") / "processed"
 FAILED_LOG = Path("data") / "failed_stars.txt"
 
-N_STARS_PER_CLASS = 1000  # start small: 100 planets + 100 false positives
+N_STARS_TOTAL = 3000   # random stars at the natural planet rate
+N_WORKERS = 6          # downloads in parallel; lower to 3 if you see errors
 GLOBAL_BINS = 2001
 LOCAL_BINS = 201
 MAX_RETRIES = 3
 
 
-def pick_subset(n_per_class=N_STARS_PER_CLASS, seed=0):
-    """Pick a balanced set of KOIs, one row per star."""
+def pick_subset(n_total=N_STARS_TOTAL, seed=0):
+    """Pick random labeled stars, one row per star."""
     df = load_koi()
     df = df[df["koi_disposition"].isin(["CONFIRMED", "FALSE POSITIVE"])].copy()
     df["label"] = (df["koi_disposition"] == "CONFIRMED").astype(int)
     cols = ["kepid", "label", "koi_period", "koi_time0bk", "koi_duration"]
     df = df[cols].dropna().drop_duplicates(subset="kepid")
-    parts = [
-        g.sample(min(n_per_class, len(g)), random_state=seed)
-        for _, g in df.groupby("label")
-    ]
-    return pd.concat(parts).reset_index(drop=True)
+    return df.sample(n=min(n_total, len(df)), random_state=seed).reset_index(drop=True)
 
 
 def download_star(kepid):
@@ -55,12 +53,10 @@ def bin_view(phase, flux, n_bins, half_width):
         in_bin = flux[idx == b]
         if len(in_bin) > 0:
             view[b] = np.median(in_bin)
-    # fill empty bins by interpolation
     good = ~np.isnan(view)
     if good.sum() < 2:
         return None
     view = np.interp(np.arange(n_bins), np.where(good)[0], view[good])
-    # normalize: median -> 0, deepest point -> -1
     view = view - np.median(view)
     depth = abs(view.min())
     if depth == 0:
@@ -87,34 +83,48 @@ def process_star(lc, period, t0, duration_hours):
     return global_view, local_view
 
 
+def handle_star(row):
+    """Download, process and save one star. Returns (kepid, status)."""
+    kepid = int(row["kepid"])
+    out = PROCESSED_DIR / f"{kepid}.npz"
+    if out.exists():
+        return kepid, "cached"
+
+    lc = download_star(kepid)
+    result = None
+    if lc is not None:
+        try:
+            result = process_star(
+                lc, row["koi_period"], row["koi_time0bk"], row["koi_duration"]
+            )
+        except Exception as e:
+            print(f"  kepid {kepid} processing failed: {e}")
+
+    if result is None:
+        return kepid, "failed"
+
+    np.savez(out, global_view=result[0], local_view=result[1], label=int(row["label"]))
+    return kepid, "saved"
+
+
 def build_dataset():
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     subset = pick_subset()
-    print("Stars to process:", len(subset))
+    print("Stars to process:", len(subset), "| workers:", N_WORKERS)
 
-    for i, row in subset.iterrows():
-        kepid = int(row["kepid"])
-        out = PROCESSED_DIR / f"{kepid}.npz"
-        if out.exists():
-            continue  # cached
-
-        lc = download_star(kepid)
-        result = None
-        if lc is not None:
-            try:
-                result = process_star(
-                    lc, row["koi_period"], row["koi_time0bk"], row["koi_duration"]
-                )
-            except Exception as e:
-                print(f"  kepid {kepid} processing failed: {e}")
-
-        if result is None:
-            with open(FAILED_LOG, "a") as f:
-                f.write(f"{kepid}\n")
-            continue
-
-        np.savez(out, global_view=result[0], local_view=result[1], label=int(row["label"]))
-        print(f"[{i + 1}/{len(subset)}] saved {kepid}")
+    counts = {"saved": 0, "cached": 0, "failed": 0}
+    rows = [row for _, row in subset.iterrows()]
+    with ThreadPoolExecutor(max_workers=N_WORKERS) as pool:
+        futures = [pool.submit(handle_star, row) for row in rows]
+        for i, fut in enumerate(as_completed(futures), start=1):
+            kepid, status = fut.result()
+            counts[status] += 1
+            if status == "failed":
+                with open(FAILED_LOG, "a") as f:
+                    f.write(f"{kepid}\n")
+            if i % 25 == 0:
+                print(f"[{i}/{len(rows)}] {counts}")
+    print("Done:", counts)
 
 
 if __name__ == "__main__":
