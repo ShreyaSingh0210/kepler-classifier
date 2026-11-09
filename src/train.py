@@ -116,7 +116,7 @@ def train_one_fold(args, G, L, y, kepids, train_idx, test_idx, seed, device):
     test_scores = predict(model, G[test_idx], L[test_idx], device)
     result = metrics(y[test_idx], test_scores)
     result["epochs_run"] = epoch + 1
-    return result
+    return result, test_scores
 
 
 def main():
@@ -138,12 +138,17 @@ def main():
     df = pd.DataFrame({"kepid": kepids, "label": y})
 
     rows = []
+    pred_rows = []
+    pred_rows = []
     for seed in range(args.seeds):
         for fold, train_idx, test_idx in get_folds(df, seed):
             if fold >= args.folds:
                 break
             set_seed(seed * 100 + fold)
-            r = train_one_fold(args, G, L, y, kepids, train_idx, test_idx, seed, device)
+            r, test_scores = train_one_fold(args, G, L, y, kepids, train_idx, test_idx, seed, device)
+            for i, sc in zip(test_idx, test_scores):
+                pred_rows.append({"run": args.name, "seed": seed, "fold": fold,
+                                  "kepid": int(kepids[i]), "label": int(y[i]), "score": float(sc)})
             r.update({"run": args.name, "seed": seed, "fold": fold})
             rows.append(r)
             print(f"seed {seed} fold {fold}: F1 {r['f1']:.3f}, PR-AUC {r['pr_auc']:.3f}, epochs {r['epochs_run']}")
@@ -154,6 +159,8 @@ def main():
     if path.exists():
         runs = pd.concat([pd.read_csv(path), runs])
     runs.to_csv(path, index=False)
+    pd.DataFrame(pred_rows).to_csv(RESULTS_DIR / f"cnn_predictions_{args.name}.csv", index=False)
+    pd.DataFrame(pred_rows).to_csv(RESULTS_DIR / f"cnn_predictions_{args.name}.csv", index=False)
 
     cols = ["precision", "recall", "f1", "pr_auc", "precision_at_k"]
     mine = runs[runs["run"] == args.name]
