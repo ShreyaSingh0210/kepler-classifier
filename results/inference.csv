@@ -1,0 +1,5 @@
+engine,batch,latency_ms,samples_per_sec
+pytorch_cpu,1,1.242,804.9
+onnxruntime_cpu,1,0.388,2574.7
+pytorch_cpu,256,145.651,1757.6
+onnxruntime_cpu,256,49.403,5181.9

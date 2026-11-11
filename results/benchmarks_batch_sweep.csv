@@ -1,0 +1,8 @@
+name,device,batch,amp,preload,compile,sec_per_epoch,samples_per_sec
+cpu,cpu,64,FALSE,FALSE,FALSE,5.11,203.5
+gpu,cuda,64,FALSE,FALSE,FALSE,0.137,7613.5
+gpu_preload,cuda,64,FALSE,TRUE,FALSE,0.137,7565.4
+gpu_amp,cuda,64,TRUE,TRUE,FALSE,0.165,6299.5
+gpu_b256,cuda,256,FALSE,TRUE,FALSE,0.125,8327.8
+gpu_b256_amp,cuda,256,TRUE,TRUE,FALSE,0.095,10961.4
+gpu_b256_amp_compile,cuda,256,TRUE,TRUE,TRUE,0.092,11257.7
