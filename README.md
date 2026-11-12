@@ -142,7 +142,7 @@ This is a sanity check, not proof, because `koi_score` still comes from NASA's o
 
 ```bash
 pip install -r requirements.txt
-python -m src.data               # download the KOI table
+python -m src.data               # research and download the KOI table
 python -m src.baseline           # tabular baselines (results/baseline_table.csv)
 python -m src.leakage            # leakage test
 python -m src.learning_curve
@@ -156,6 +156,20 @@ python -m src.export_onnx
 python -m src.candidates
 python -m pytest -q
 ```
+##setup instructions:
+## Setup
+
+```bash
+git clone https://github.com/ShreyaSingh0210/kepler-classifier.git
+cd kepler-classifier
+pip install -r requirements.txt
+```
+
+## Usage
+
+```bash
+python src/train.py
+```
 
 ## Limitations and what's next
 
@@ -165,3 +179,12 @@ python -m pytest -q
 - **Independent validation.** Checking against `koi_score` is useful, but comparing against newer confirmed-planet catalogs would be a much better test.
 - **Interpolation artifact.** The local view fills empty bins by linear interpolation, which leaves straight lines for very short transits. Next step: mask the empty bins or use a wider local window.
 - **Not done.** Profiler traces, TensorRT, cuML, and a custom GPU kernel for the fold-and-bin step.
+  
+## Results
+
+| Model | Accuracy | Precision | Recall | F1 |
+|-------|----------|-----------|--------|-----|
+| Baseline | _fill in_ | _fill in_ | _fill in_ | _fill in_ |
+| Light-curve CNN | _fill in_ | _fill in_ | _fill in_ | _fill in_ |
+
+GPU vs CPU speedup: _fill in your measured value_
