@@ -9,7 +9,7 @@ Project Log
 * Tested ONNX Runtime on CPU and found it was around 3x faster than PyTorch, with the same outputs.
 
 
-
+Project Log
 12-11-2016
 
 * Tested different batch sizes and noticed that the performance improvement starts to level off after batch size 256.
