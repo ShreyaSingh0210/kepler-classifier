@@ -1,4 +1,4 @@
-Project Log
+Project Logs
 06-11-2026
 
 * Repository setup: I created the GitHub repository and cloned it to my local machine.
@@ -9,7 +9,7 @@ Project Log
 * Tested ONNX Runtime on CPU and found it was around 3x faster than PyTorch, with the same outputs.
 
 
-Project Log
+Project Logs
 12-11-2016
 
 * Tested different batch sizes and noticed that the performance improvement starts to level off after batch size 256.
