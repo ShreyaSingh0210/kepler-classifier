@@ -138,6 +138,21 @@ As a sanity check, the top 100 have an average `koi_score` of 0.911, against 0.8
 
 This is a sanity check, not proof, because `koi_score` still comes from NASA's own pipeline. The output file has a `snapshot_date` column so I can check how my top picks hold up against future catalog updates.
 
+## Project Structure
+
+```
+kepler-classifier/
+├── notebooks/   # exploration and experiments
+├── results/     # metrics, plots and candidate rankings
+├── src/
+│   ├── features.py   # feature preparation
+│   ├── splits.py     # train/test splitting
+│   ├── baseline.py   # tabular baseline model
+│   └── train.py      # model training
+├── requirements.txt
+└── README.md
+```
+
 ## How to run it yourself
 
 ```bash
